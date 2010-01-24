@@ -11,6 +11,7 @@ except ImportError:
 
 from trac.core import implements, Component
 from trac.ticket.api import ITicketManipulator
+from trac.util.translation import _
 from trac.web.chrome import ITemplateProvider
 
 __all__ = ['TicketValidationPlugin']
@@ -24,6 +25,8 @@ class TicketValidationPlugin(Component):
 
     implements(ITemplateProvider, ITicketManipulator)
 
+    _rules = None
+
     def __init__(self):
         self._rules_lock = threading.RLock()
 
@@ -34,14 +37,13 @@ class TicketValidationPlugin(Component):
             rule = {
                     'name': name,
                     'condition': config.get(name),
+                    'required': config.get('%s.required' % name).split(),
                     }
             rules.append(rule)
         rules.sort(lambda x, y: cmp(x['name'], y['name']))
         return rules
 
     # Public API
-
-    _rules = None
 
     def get_rules(self):
         """Returns the list of ticket validation rules. Rules are cached in memory
@@ -78,6 +80,12 @@ class TicketValidationPlugin(Component):
         This is where the magic happens."""
         rules = self.get_rules()
         problems = []
-        print rules
-        print ticket.fields
+        for r in rules:
+            for name in r['required']:
+                field = [f for f in ticket.fields if f['name'] == name]
+                print field
+                default = field[0].get('value')
+                current = ticket.get_value_or_default(name)
+                if default == current:
+                    problems.append((field[0]['label'], _('This field is mandatory.')))
         return problems
