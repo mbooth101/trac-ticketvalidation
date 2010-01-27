@@ -19,29 +19,43 @@ from trac.web.chrome import ITemplateProvider
 __all__ = ['TicketValidationRules']
 
 
-class BoolOperand(object):
+class BoolOperator(object):
     ticket = None
     def __init__(self, t):
-        self.args = t[0]
+        self._args = t[0]
     def __str__(self):
-        return "(" + " ".join(map(str,self.args)) + ")"
+        return "(" + " ".join(map(str,self._args)) + ")"
 
-class BoolEquality(BoolOperand):
+class BoolEquality(BoolOperator):
+    def _expanded_args(self):
+        """Generator that returns expanded arguments by replacing them with field
+        values if they are ticket field names."""
+        for a in self._args:
+            field = [f for f in BoolOperator.ticket.fields if f['name'] == a]
+            if field:
+                yield BoolOperator.ticket.get_value_or_default(a)
+            else:
+                yield a
     def __nonzero__(self):
-        # TODO - implement this
-        return False
+        # TODO: This implementation naively assumes we will only get 3 arguments.
+        # It could really do with making better somehow.
+        args = [a for a in self._expanded_args()]
+        if args[1] == '==':
+            return args[0] == args[2]
+        if args[1] == '!=':
+            return args[0] != args[2]
 
-class BoolAnd(BoolOperand):
+class BoolAnd(BoolOperator):
     def __nonzero__(self):
-        for a in self.args[0::2]:
+        for a in self._args[0::2]:
             v = bool(a)
             if not v:
                 return False
         return True
 
-class BoolOr(BoolOperand):
+class BoolOr(BoolOperator):
     def __nonzero__(self):
-        for a in self.args[0::2]:
+        for a in self._args[0::2]:
             v = bool(a)
             if v:
                 return True
@@ -116,11 +130,15 @@ class TicketValidationRules(Component):
         """This API is called by Trac when the user tries to submit a ticket.
         This is where the magic happens for required fields."""
         problems = []
-        BoolOperand.ticket = ticket
+        # TODO: It's possible a race condition to make the ticket a class attribute
+        # of the BoolOperator... This needs thinking about -- maybe cleverer parse
+        # in the grammar definition actions
+        BoolOperator.ticket = ticket
         for r in self.get_rules():
             result = self._grammar.parseString(r['condition'])[0]
-            self.log.debug('required field rule "%s": %s is %s' % (r['name'], str(result), bool(result)))
-            if bool(result):
+            b = bool(result)
+            self.log.debug('required field rule "%s": %s is %s' % (r['name'], str(result), b))
+            if b:
                 for name in r['required']:
                     field = [f for f in ticket.fields if f['name'] == name]
                     default = field[0].get('value')
