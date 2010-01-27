@@ -9,9 +9,11 @@ from trac.admin.api import IAdminPanelProvider
 from trac.util.translation import _
 from trac.web.chrome import add_script
 
+__all__ = ['TicketValidationAdminPanel']
+
 
 class TicketValidationAdminPanel(Component):
-    """Provides an admin panel for ticket validation config."""
+    """Provides an admin panel for configuring ticket validation rules."""
 
     implements(IAdminPanelProvider)
 

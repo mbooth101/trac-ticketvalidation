@@ -16,39 +16,41 @@ from trac.ticket.api import ITicketManipulator
 from trac.util.translation import _
 from trac.web.chrome import ITemplateProvider
 
-__all__ = ['TicketValidationPlugin']
+__all__ = ['TicketValidationRules']
 
 
 class BoolOperand(object):
+    ticket = None
     def __init__(self, t):
         self.args = t[0]
     def __str__(self):
         return "(" + " ".join(map(str,self.args)) + ")"
 
-
 class BoolEquality(BoolOperand):
     def __nonzero__(self):
         # TODO - implement this
-        return True
-
+        return False
 
 class BoolAnd(BoolOperand):
     def __nonzero__(self):
-        # TODO - implement this
+        for a in self.args[0::2]:
+            v = bool(a)
+            if not v:
+                return False
         return True
-
 
 class BoolOr(BoolOperand):
     def __nonzero__(self):
-        # TODO - implement this
-        return True
+        for a in self.args[0::2]:
+            v = bool(a)
+            if v:
+                return True
+        return False
 
 
-class TicketValidationPlugin(Component):
+class TicketValidationRules(Component):
     """Main component of the ticket validation plug-in. Fetches the validation
-    rules from the config and applies them when the user submits the ticket. If
-    any fields are found to violate the rules, the submission is disallowed and
-    the user is chastised."""
+    rules from the config, parses them and applies them appropriately."""
 
     implements(ITemplateProvider, ITicketManipulator)
 
@@ -58,7 +60,7 @@ class TicketValidationPlugin(Component):
         self._rules_lock = threading.RLock()
         
         # grammar definition for parsing rule conditions
-        self._grammar = operatorPrecedence(Word(alphanums + '_') | quotedString,
+        self._grammar = operatorPrecedence(Word(alphanums + '_') | quotedString.setParseAction(removeQuotes),
                                            [(oneOf('== !='), 2, opAssoc.LEFT, BoolEquality),
                                             (oneOf('and &&'), 2, opAssoc.LEFT, BoolAnd),
                                             (oneOf('or ||'), 2, opAssoc.LEFT, BoolOr),
@@ -72,6 +74,7 @@ class TicketValidationPlugin(Component):
                     'name': name,
                     'condition': config.get(name),
                     'required': config.get('%s.required' % name).split(),
+                    'hidden': config.get('%s.hidden' % name).split(),
                     }
             rules.append(rule)
         rules.sort(lambda x, y: cmp(x['name'], y['name']))
@@ -112,9 +115,9 @@ class TicketValidationPlugin(Component):
     def validate_ticket(self, req, ticket):
         """This API is called by Trac when the user tries to submit a ticket.
         This is where the magic happens for required fields."""
-        rules = self.get_rules()
         problems = []
-        for r in rules:
+        BoolOperand.ticket = ticket
+        for r in self.get_rules():
             result = self._grammar.parseString(r['condition'])[0]
             self.log.debug('required field rule "%s": %s is %s' % (r['name'], str(result), bool(result)))
             if bool(result):
