@@ -84,13 +84,17 @@ class TicketValidationRules(Component):
         rules = []
         config = self.config['ticket-validation']
         for name in [k for k,v in config.options() if '.' not in k]:
-            rule = {
-                    'name': name,
-                    'condition': config.get(name),
-                    'required': config.get('%s.required' % name).split(),
-                    'hidden': config.get('%s.hidden' % name).split(),
-                    }
-            rules.append(rule)
+            # at least the condition must exist
+            if config.get(name):
+                rule = {
+                        'name': name,
+                        'condition': config.get(name),
+                        'required': config.get('%s.required' % name).split(),
+                        'hidden': config.get('%s.hidden' % name).split(),
+                        }
+                rules.append(rule)
+            else:
+                self.log.warning('ignoring rule "%s" without a condition' % name)
         rules.sort(lambda x, y: cmp(x['name'], y['name']))
         return rules
 
