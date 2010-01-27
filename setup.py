@@ -14,7 +14,7 @@ setup(
     author_email='mat@matbooth.co.uk',
     url='http://www.matbooth.co.uk/trac/wiki/TicketValidationStart',
     license='BSD',
-    description='Support for required and hidden fields in Trac',
+    description='Support for conditional required and hidden fields in Trac',
     long_description='This plugin adds capability to make built-in and custom ticket fields required or hidden based on a configurable boolean condition.',
     packages=['ticketvalidation'],
     package_data={

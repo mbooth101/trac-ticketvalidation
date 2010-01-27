@@ -14,6 +14,7 @@ from pyparsing import *
 from trac.core import implements, Component
 from trac.ticket.api import ITicketManipulator
 from trac.util.translation import _
+from trac.web.api import ITemplateStreamFilter
 from trac.web.chrome import ITemplateProvider
 
 __all__ = ['TicketValidationRules']
@@ -66,7 +67,7 @@ class TicketValidationRules(Component):
     """Main component of the ticket validation plug-in. Fetches the validation
     rules from the config, parses them and applies them appropriately."""
 
-    implements(ITemplateProvider, ITicketManipulator)
+    implements(ITemplateProvider, ITicketManipulator, ITemplateStreamFilter)
 
     _rules = None
 
@@ -131,8 +132,10 @@ class TicketValidationRules(Component):
         pass
 
     def validate_ticket(self, req, ticket):
-        """This API is called by Trac when the user tries to submit a ticket.
-        This is where the magic happens for required fields."""
+        """Iterate through all the ticket validation rules and if any them evaluate
+        to true then the fields specified in that rule's "required" config will be
+        mandatory. The user will not be able to submit the ticket until all mandatory
+        fields have been changed away from their default value."""
         problems = []
         # TODO: It's possible a race condition to make the ticket a class attribute
         # of the BoolOperator... This needs thinking about -- maybe cleverer parse
@@ -150,3 +153,12 @@ class TicketValidationRules(Component):
                     if default == current:
                         problems.append((field[0]['label'], _('This field is mandatory.')))
         return problems
+
+    # ITemplateStreamFilter methods
+
+    def filter_stream(self, req, method, filename, stream, data):
+        """Iterate through all the ticket validation rules and if any them evaluate
+        to true then the fields specified in that rule's "hidden" config will be
+        hidden from the user on the ticket entry form."""
+        # TODO: Implement me
+        return stream
