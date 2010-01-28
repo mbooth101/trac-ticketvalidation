@@ -12,11 +12,28 @@
     <h2>Manage $label_plural</h2>
 
     <py:choose test="view">
-      <form py:when="'detail'" class="mod" id="modprod" method="post" action="">
+      <form py:when="'detail'" class="mod" id="modrule" method="post" action="">
         <fieldset>
           <legend>Modify $label_singular:</legend>
           <div class="field">
-            <label>Name:<br /><input type="text" name="name" value="$field.name"/></label>
+            <label>Name:<br /><input type="text" name="name" value="$rule.name"/></label>
+          </div>
+          <div class="field">
+            <label>Condition:<br /><input type="text" size="65" name="condition" value="$rule.condition"/></label>
+          </div>
+          <div class="field">
+            Required Fields:<br />
+            <py:for each="f in fields">
+              <label py:if="f.name in rule.required"><input type="checkbox" name="required" value="$f.name" checked="checked"/> $f.label</label>
+              <label py:if="f.name not in rule.required"><input type="checkbox" name="required" value="$f.name"/> $f.label</label>
+            </py:for>
+          </div>
+          <div class="field">
+            Hidden Fields:<br />
+            <py:for each="f in fields">
+              <label py:if="f.name in rule.hidden"><input type="checkbox" name="required" value="$f.name" checked="checked"/> $f.label</label>
+              <label py:if="f.name not in rule.hidden"><input type="checkbox" name="required" value="$f.name"/> $f.label</label>
+            </py:for>
           </div>
           <div class="buttons">
             <input type="submit" name="cancel" value="Cancel" />
@@ -26,7 +43,7 @@
       </form>
 
       <py:otherwise>
-        <form class="addnew" id="addprod" method="post" action="">
+        <form class="addnew" id="addrule" method="post" action="">
           <fieldset>
             <legend>Add $label_singular:</legend>
             <div class="field">
@@ -57,8 +74,10 @@
             </table>
             <div class="buttons">
               <input type="submit" name="remove" value="Remove selected items" />
-              <input type="submit" name="apply" value="Apply changes" />
             </div>
+            <p class="help">
+              You can remove all the items in this list to perform no ticket validation at all.
+            </p>
           </form>
 
           <p py:otherwise="" class="help">
