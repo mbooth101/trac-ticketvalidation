@@ -31,8 +31,8 @@
           <div class="field">
             Hidden Fields:<br />
             <py:for each="f in fields">
-              <label py:if="f.name in rule.hidden"><input type="checkbox" name="required" value="$f.name" checked="checked"/> $f.label</label>
-              <label py:if="f.name not in rule.hidden"><input type="checkbox" name="required" value="$f.name"/> $f.label</label>
+              <label py:if="f.name in rule.hidden"><input type="checkbox" name="hidden" value="$f.name" checked="checked"/> $f.label</label>
+              <label py:if="f.name not in rule.hidden"><input type="checkbox" name="hidden" value="$f.name"/> $f.label</label>
             </py:for>
           </div>
           <div class="buttons">
