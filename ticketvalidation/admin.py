@@ -62,6 +62,12 @@ class TicketValidationAdminPanel(TicketAdminPanel):
         else:
             if req.method == 'POST':
                 if req.args.get('add'):
+                    name = str(req.args.get('name')).strip()
+                    if name:
+                        if name in [r['name'] for r in rules]:
+                            raise TracError(_('A rule with this name already exists'))
+                        self.config.set('ticket-validation', name, 'type == defect')
+                        _save_config(self.config, req, self.log)
                     req.redirect(req.href.admin(cat, page))
                 elif req.args.get('remove'):
                     sel = req.args.get('sel')

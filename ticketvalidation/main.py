@@ -148,7 +148,7 @@ class TicketValidationRules(Component):
             if b:
                 for name in r['required']:
                     field = [f for f in ticket.fields if f['name'] == name]
-                    default = field[0].get('value')
+                    default = field[0].get('value') or ''
                     current = ticket.get_value_or_default(name)
                     if default == current:
                         problems.append((field[0]['label'], _('This field is mandatory.')))
