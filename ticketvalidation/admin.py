@@ -4,6 +4,7 @@
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution.
 
+from trac.core import TracError
 from trac.ticket.admin import TicketAdminPanel
 from trac.ticket.api import TicketSystem
 from trac.util.translation import _
@@ -34,13 +35,11 @@ class TicketValidationAdminPanel(TicketAdminPanel):
                     condition = str(req.args.get('condition')).strip()
                     assert name, 'Cannot save a rule with no name'
                     assert condition, 'Cannot save a rule with no condition'
-                    self.config.remove('ticket-validation', rule[0]['name'])
-                    self.config.set('ticket-validation', name, condition)
+                    self._delete_rules(rule[0]['name'])
 
+                    self.config.set('ticket-validation', name, condition)
                     for opt in ('required', 'hidden'):
                         value = req.args.get(opt)
-                        self.config.remove('ticket-validation',
-                                           '%s.%s' % (rule[0]['name'], opt))
                         if isinstance(value, list):
                             self.config.set('ticket-validation',
                                             '%s.%s' % (name, opt), " ".join(value))
@@ -61,6 +60,17 @@ class TicketValidationAdminPanel(TicketAdminPanel):
 
         # list view
         else:
+            if req.method == 'POST':
+                if req.args.get('add'):
+                    req.redirect(req.href.admin(cat, page))
+                elif req.args.get('remove'):
+                    sel = req.args.get('sel')
+                    if not sel:
+                        raise TracError(_('No rules selected'))
+                    self._delete_rules(sel)
+                    _save_config(self.config, req, self.log)
+                    req.redirect(req.href.admin(cat, page))
+
             data = {'view': 'list',
                     'rules': rules,
                     }
@@ -68,3 +78,12 @@ class TicketValidationAdminPanel(TicketAdminPanel):
         data['label_singular'] = self._label[0]
         data['label_plural'] = self._label[1]
         return 'admin_ticketvalidation.html', data
+
+    def _delete_rules(self, names):
+        if not isinstance(names, list):
+            names = [names]
+        for name in names:
+            self.config.remove('ticket-validation', name)
+            for opt in ('required', 'hidden'):
+                self.config.remove('ticket-validation', '%s.%s' % (name, opt))
+        return
