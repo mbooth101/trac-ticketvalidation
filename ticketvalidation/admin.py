@@ -10,7 +10,7 @@ from trac.ticket.api import TicketSystem
 from trac.util.translation import _
 from trac.admin.web_ui import _save_config
 
-from ticketvalidation.main import TicketValidationRules
+from ticketvalidation.rules import TicketValidationRules
 
 __all__ = ['TicketValidationAdminPanel']
 

@@ -27,7 +27,7 @@ setup(
     entry_points={
         'trac.plugins': [
            'ticketvalidation.admin = ticketvalidation.admin',
-           'ticketvalidation.main = ticketvalidation.main',
+           'ticketvalidation.rules = ticketvalidation.rules',
            ]
         },
     install_requires = [
