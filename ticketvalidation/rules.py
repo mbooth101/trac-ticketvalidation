@@ -160,5 +160,20 @@ class TicketValidationRules(Component):
         """Iterate through all the ticket validation rules and if any them evaluate
         to true then the fields specified in that rule's "hidden" config will be
         hidden from the user on the ticket entry form."""
-        # TODO: Implement me
+        if not req.path_info.startswith(('/newticket', '/ticket')):
+            return stream
+        # TODO: It's possible a race condition to make the ticket a class attribute
+        # of the BoolOperator... This needs thinking about -- maybe cleverer parse
+        # in the grammar definition actions
+        BoolOperator.ticket = data['ticket']
+        for r in self.get_rules():
+            result = self._grammar.parseString(r['condition'])[0]
+            b = bool(result)
+            self.log.debug('hidden field rule "%s": %s is %s' % (r['name'], str(result), b))
+            if b:
+                for name in r['hidden']:
+                    for f in data['fields']:
+                        if f['name'] == name:
+                            f['skip'] = True
+        #TODO: Fettle the stream
         return stream
