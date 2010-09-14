@@ -22,6 +22,7 @@ setup(
             'htdocs/css/*.css',
             'htdocs/js/*.js',
             'templates/*.html',
+            'templates/*.xml',
             ]
         },
     entry_points={

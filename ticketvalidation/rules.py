@@ -9,13 +9,19 @@ try:
 except ImportError:
     import dummy_threading as threading
 
+import re
+
 from pyparsing import *
+
+from genshi.builder import tag
+from genshi.filters import Transformer
 
 from trac.core import implements, Component
 from trac.ticket.api import ITicketManipulator
+from trac.ticket.model import Ticket
 from trac.util.translation import _
-from trac.web.api import ITemplateStreamFilter
-from trac.web.chrome import ITemplateProvider
+from trac.web.api import ITemplateStreamFilter, IRequestHandler
+from trac.web.chrome import ITemplateProvider, add_script
 
 __all__ = ['TicketValidationRules']
 
@@ -67,7 +73,7 @@ class TicketValidationRules(Component):
     """Main component of the ticket validation plug-in. Fetches the validation
     rules from the config, parses them and applies them appropriately."""
 
-    implements(ITemplateProvider, ITicketManipulator, ITemplateStreamFilter)
+    implements(ITemplateProvider, ITicketManipulator, ITemplateStreamFilter, IRequestHandler)
 
     _rules = None
 
@@ -157,23 +163,49 @@ class TicketValidationRules(Component):
     # ITemplateStreamFilter methods
 
     def filter_stream(self, req, method, filename, stream, data):
+        """Add javascript to the ticket pages that makes an ajax request whenever
+        a field changes so that the rules for hidden fields can be processed at the
+        server side without and be effected without a page reload."""
+        if not req.path_info.startswith(('/newticket', '/ticket')):
+            return stream
+
+        address = tag.script(type="text/javascript")
+        address.append("function getTracURL() { return '")
+        address.append(req.base_url + "/ticketValidation/ajax" + "'; }")
+
+        stream |= Transformer('.//head').append(address)
+
+        # For some reason there isn't a status field on the ticket page, only the newticket page
+        # Add it in so validation rules involving the status work
+        if req.path_info.startswith('/ticket') and 'ticket' in data:
+            status = tag.input(type="hidden", name="field_status", value=data['ticket'].values['status'])
+            stream |= Transformer(".//form[@id='propertyform']").append(status)
+
+        add_script(req, "ticketvalidation/js/RuleUpdate.js")
+        return stream
+
+    # IRequestHandler methods
+
+    def match_request(self, req):
+        """Match ajax requests from the javascript."""
+        return re.match('/ticketValidation/ajax', req.path_info)
+
+    def process_request(self, req):
         """Iterate through all the ticket validation rules and if any them evaluate
         to true then the fields specified in that rule's "hidden" config will be
         hidden from the user on the ticket entry form."""
-        if not req.path_info.startswith(('/newticket', '/ticket')):
-            return stream
-        # TODO: It's possible a race condition to make the ticket a class attribute
-        # of the BoolOperator... This needs thinking about -- maybe cleverer parse
-        # in the grammar definition actions
-        BoolOperator.ticket = data['ticket']
+        hiddenfields = []
+        ticket = Ticket(self.env)
+        ticket.populate(req.args)
+        BoolOperator.ticket = ticket
         for r in self.get_rules():
             result = self._grammar.parseString(r['condition'])[0]
             b = bool(result)
-            self.log.debug('hidden field rule "%s": %s is %s' % (r['name'], str(result), b))
+            self.log.debug('hidden field rule "%s": %s is %s' % (r['hidden'], str(result), b))
             if b:
                 for name in r['hidden']:
-                    for f in data['fields']:
-                        if f['name'] == name:
-                            f['skip'] = True
-        #TODO: Fettle the stream
-        return stream
+                    field = [f for f in ticket.fields if f['name'] == name]
+                    hiddenfields.append("field-" + field[0]['name'])
+
+        data = {'fields' : hiddenfields}
+        return 'ajax_response.xml', data, 'text/xml'
