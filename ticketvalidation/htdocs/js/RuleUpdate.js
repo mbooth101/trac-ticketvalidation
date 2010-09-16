@@ -32,6 +32,9 @@ function getValues() {
 	// Build the query string
 	var values = "";
 	inputs.each(function() {
+		if ($(this).attr("type") == "radio" && !$(this).attr("checked")) {
+			return;
+		}
 		// The this.value property doesn't seem to work in IE for <select/> objects
 		if ($.browser.msie) {
 			var id = "field-" + this.name.substr(6);
