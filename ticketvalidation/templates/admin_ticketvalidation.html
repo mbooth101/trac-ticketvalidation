@@ -23,17 +23,25 @@
           </div>
           <div class="field">
             Required Fields:<br />
-            <py:for each="f in fields"><py:if test="f.name != 'status'">
-              <label py:if="f.name in rule.required"><input type="checkbox" name="required" value="$f.name" checked="checked"/> $f.label</label>
-              <label py:if="f.name not in rule.required"><input type="checkbox" name="required" value="$f.name"/> $f.label</label>
-            </py:if></py:for>
+            <table>
+              <tr py:for="row in group(fields, 3)"><py:for each="idx, f in enumerate(row)">
+                <td py:if="f">
+                  <label py:if="f.name in rule.required"><input type="checkbox" name="required" value="$f.name" checked="checked"/> $f.label</label>
+                  <label py:if="f.name not in rule.required"><input type="checkbox" name="required" value="$f.name"/> $f.label</label>
+                </td>
+              </py:for></tr>
+            </table>
           </div>
           <div class="field">
             Hidden Fields:<br />
-            <py:for each="f in fields"><py:if test="f.name != 'status'">
-              <label py:if="f.name in rule.hidden"><input type="checkbox" name="hidden" value="$f.name" checked="checked"/> $f.label</label>
-              <label py:if="f.name not in rule.hidden"><input type="checkbox" name="hidden" value="$f.name"/> $f.label</label>
-            </py:if></py:for>
+            <table>
+              <tr py:for="row in group(fields, 3)"><py:for each="idx, f in enumerate(row)">
+                <td py:if="f">
+                  <label py:if="f.name in rule.hidden"><input type="checkbox" name="hidden" value="$f.name" checked="checked"/> $f.label</label>
+                  <label py:if="f.name not in rule.hidden"><input type="checkbox" name="hidden" value="$f.name"/> $f.label</label>
+                </td>
+              </py:for></tr>
+            </table>
           </div>
           <div class="buttons">
             <input type="submit" name="cancel" value="Cancel" />

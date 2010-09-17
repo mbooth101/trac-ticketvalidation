@@ -55,7 +55,7 @@ class TicketValidationAdminPanel(TicketAdminPanel):
             data = {'view': 'detail',
                     'rule': rule[0],
                     'fields': [{'name': f['name'], 'label': f['label']} for f in
-                               TicketSystem(self.env).get_ticket_fields()]
+                               TicketSystem(self.env).get_ticket_fields() if f['name'] != 'status']
                     }
 
         # list view
