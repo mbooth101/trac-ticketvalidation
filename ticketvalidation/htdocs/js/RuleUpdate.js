@@ -8,7 +8,7 @@ var inputs;
 
 jQuery(document).ready(function($) {
 	// Add a change handler to each input field
-	inputs = $("[@name*='field']");
+	inputs = $("[name*='field']");
 	inputs.change(function() {
 		ajax();
 	});
@@ -58,8 +58,8 @@ function getValues() {
 function showFields(xml)
 {	
 	// Shows all the fields
-	$("[@for*='field-']").parent().show();
-	$("[@name*='field_']").parent().show();
+	$("[for*='field-']").parent().show();
+	$("[name*='field_']").parent().show();
 	
 	// Stores the values from xml doc to an array
 	var arr = new Array();
@@ -75,14 +75,14 @@ function showFields(xml)
 	var i = 0;
 	while (i<arr.length)
 	{
-		$("[@for*='" + arr[i] + "']").parent().hide();
+		$("[for*='" + arr[i] + "']").parent().hide();
 		
 		arr[i] = arr[i].substr(6);
 		var temp = new String;
 		temp = 'field_' + arr[i];
 		arr[i] = temp;
 
-		$("[@name*=" + arr[i] + "]").parent().hide();
+		$("[name*=" + arr[i] + "]").parent().hide();
 		i++;
 	}
 }
