@@ -17,7 +17,7 @@ jQuery(document).ready(function($) {
 
 function ajax() {
 	$.ajax({
-		type: "GET",
+		type: "POST",
 		url: getTracURL(),
 		data: getValues(),
 		cache: false,
@@ -51,8 +51,8 @@ function getValues() {
 			values += this.name.substr(6) + "=" + this.value + "&";
 		}
 	});
-	// Minus the last '&'
-	return values.slice(0, -1);
+	values += "__FORM_TOKEN=" + $("input[name='__FORM_TOKEN']").attr("value");
+	return values;
 }
 
 function showFields(xml)

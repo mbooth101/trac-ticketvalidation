@@ -26,6 +26,9 @@ from trac.web.chrome import ITemplateProvider, add_script
 __all__ = ['TicketValidationRules']
 
 
+AJAX_URL = '/ticketvalidation/ajax'
+
+
 class BoolOperator(object):
     ticket = None
     def __init__(self, t):
@@ -171,7 +174,7 @@ class TicketValidationRules(Component):
 
         address = tag.script(type="text/javascript")
         address.append("function getTracURL() { return '")
-        address.append(req.base_url + "/ticketValidation/ajax" + "'; }")
+        address.append(req.base_url + AJAX_URL + "'; }")
 
         stream |= Transformer('.//head').append(address)
 
@@ -188,7 +191,7 @@ class TicketValidationRules(Component):
 
     def match_request(self, req):
         """Match ajax requests from the javascript."""
-        return re.match('/ticketValidation/ajax', req.path_info)
+        return re.match(AJAX_URL, req.path_info)
 
     def process_request(self, req):
         """Iterate through all the ticket validation rules and if any them evaluate
