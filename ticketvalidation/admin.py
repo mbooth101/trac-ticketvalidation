@@ -33,11 +33,18 @@ class TicketValidationAdminPanel(TicketAdminPanel):
                 if req.args.get('save'):
                     name = str(req.args.get('name')).strip()
                     condition = str(req.args.get('condition')).strip()
+                    enabled = str(req.args.get('enabled')).strip()
                     assert name, 'Cannot save a rule with no name'
                     assert condition, 'Cannot save a rule with no condition'
+                    if enabled == 'enabled':
+                        enabled = 'True'
+                    else:
+                        enabled = 'False'
+
                     self._delete_rules(rule[0]['name'])
 
                     self.config.set('ticket-validation', name, condition)
+                    self.config.set('ticket-validation', '%s.enabled' % name, enabled)
                     for opt in ('required', 'hidden'):
                         value = req.args.get(opt)
                         if isinstance(value, list):
@@ -67,6 +74,7 @@ class TicketValidationAdminPanel(TicketAdminPanel):
                         if name in [r['name'] for r in rules]:
                             raise TracError(_('A rule with this name already exists'))
                         self.config.set('ticket-validation', name, 'type == defect')
+                        self.config.set('ticket-validation', '%s.enabled' % name, 'False')
                         _save_config(self.config, req, self.log)
                     req.redirect(req.href.admin(cat, page))
                 elif req.args.get('remove'):
@@ -90,6 +98,6 @@ class TicketValidationAdminPanel(TicketAdminPanel):
             names = [names]
         for name in names:
             self.config.remove('ticket-validation', name)
-            for opt in ('required', 'hidden'):
+            for opt in ('required', 'hidden', 'enabled'):
                 self.config.remove('ticket-validation', '%s.%s' % (name, opt))
         return

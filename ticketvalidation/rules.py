@@ -101,6 +101,7 @@ class TicketValidationRules(Component):
                         'condition': config.get(name),
                         'required': config.get('%s.required' % name).split(),
                         'hidden': config.get('%s.hidden' % name).split(),
+                        'enabled': config.getbool('%s.enabled' % name, 'True'),
                         }
                 rules.append(rule)
             else:
@@ -150,7 +151,7 @@ class TicketValidationRules(Component):
         # of the BoolOperator... This needs thinking about -- maybe cleverer parse
         # in the grammar definition actions
         BoolOperator.ticket = ticket
-        for r in self.get_rules():
+        for r in [x for x in self.get_rules() if x['enabled']]:
             result = self._grammar.parseString(r['condition'])[0]
             b = bool(result)
             self.log.debug('required field rule "%s": %s is %s' % (r['name'], str(result), b))
@@ -201,7 +202,7 @@ class TicketValidationRules(Component):
         ticket = Ticket(self.env)
         ticket.populate(req.args)
         BoolOperator.ticket = ticket
-        for r in self.get_rules():
+        for r in [x for x in self.get_rules() if x['enabled']]:
             result = self._grammar.parseString(r['condition'])[0]
             b = bool(result)
             self.log.debug('hidden field rule "%s": %s is %s' % (r['hidden'], str(result), b))

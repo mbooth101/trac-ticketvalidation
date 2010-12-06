@@ -19,6 +19,10 @@
             <label>Name:<br /><input type="text" name="name" value="$rule.name"/></label>
           </div>
           <div class="field">
+            <label py:if="rule.enabled"><input type="checkbox" name="enabled" value="enabled" checked="checked"/> Enable Rule</label>
+            <label py:if="not rule.enabled"><input type="checkbox" name="enabled" value="enabled"/> Enable Rule</label>
+          </div>
+          <div class="field">
             <label>Condition:<br /><input type="text" size="65" name="condition" value="$rule.condition"/></label>
           </div>
           <div class="field">
@@ -67,8 +71,10 @@
           <form py:when="rules" id="rules_table" method="post" action="">
             <table class="listing" id="ruleslist">
               <thead>
-                <tr><th class="sel">&nbsp;</th>
+                <tr>
+                  <th class="sel">&nbsp;</th>
                   <th>Name</th>
+                  <th>Enabled</th>
                 </tr>
               </thead>
               <tbody>
@@ -77,6 +83,7 @@
                   <td class="name">
                     <a href="${panel_href(item.name)}">$item.name</a>
                   </td>
+                  <td class="enabled"><py:if test="item.enabled">Yes</py:if><py:if test="not item.enabled">No</py:if></td>
                 </tr>
               </tbody>
             </table>
